@@ -1,27 +1,56 @@
-"""Claude-powered analysis. Uses Anthropic SDK async client."""
+"""Claude-powered analysis. Uses Anthropic SDK async client.
+
+DeepSeek's Anthropic-compatible endpoint means we can use the same SDK —
+just a second client pointed at api.deepseek.com/anthropic.
+"""
 import os
 import re
 
 from anthropic import AsyncAnthropic
 
 from .news import get_news_for_symbol
-from .settings import get_model
+from .settings import get_model, is_deepseek_model
 from .stocks import fmt_summary, get_holdings, get_summary
 
-_client: AsyncAnthropic | None = None
+_anthropic_client: AsyncAnthropic | None = None
+_deepseek_client: AsyncAnthropic | None = None
 
 
 def get_client() -> AsyncAnthropic:
-    """Lazy singleton. Raises a clear error if the API key is missing."""
-    global _client
-    if _client is None:
+    """Lazy Anthropic client. Raises a clear error if the API key is missing."""
+    global _anthropic_client
+    if _anthropic_client is None:
         key = os.environ.get("ANTHROPIC_API_KEY")
         if not key:
             raise RuntimeError(
                 "ANTHROPIC_API_KEY is not set. Add it in Railway → Variables."
             )
-        _client = AsyncAnthropic(api_key=key)
-    return _client
+        _anthropic_client = AsyncAnthropic(api_key=key)
+    return _anthropic_client
+
+
+def get_deepseek_client() -> AsyncAnthropic:
+    """Lazy DeepSeek client — same SDK, different base URL."""
+    global _deepseek_client
+    if _deepseek_client is None:
+        key = os.environ.get("DEEPSEEK_API_KEY")
+        if not key:
+            raise RuntimeError(
+                "DEEPSEEK_API_KEY is not set. Add it in Railway → Variables, "
+                "or switch to a Claude model with /model sonnet."
+            )
+        _deepseek_client = AsyncAnthropic(
+            api_key=key,
+            base_url="https://api.deepseek.com/anthropic",
+        )
+    return _deepseek_client
+
+
+def get_client_for(model_id: str) -> AsyncAnthropic:
+    """Route to the right provider based on the model ID."""
+    if is_deepseek_model(model_id):
+        return get_deepseek_client()
+    return get_client()
 
 SYSTEM = """You are a stock-analysis assistant for a personal investor based in Thailand.
 
@@ -92,8 +121,9 @@ Structure your response as:
 4. *Technical read* — where price sits vs SMAs, RSI signal.
 5. *What to watch* — catalysts, levels, upcoming events.
 """
-    msg = await get_client().messages.create(
-        model=get_model(),
+    model = get_model()
+    msg = await get_client_for(model).messages.create(
+        model=model,
         max_tokens=1500,
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],
@@ -133,8 +163,9 @@ async def chat_about_stocks(text: str) -> str:
 Relevant market data fetched just now:
 {context_block}
 """
-    msg = await get_client().messages.create(
-        model=get_model(),
+    model = get_model()
+    msg = await get_client_for(model).messages.create(
+        model=model,
         max_tokens=1200,
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],

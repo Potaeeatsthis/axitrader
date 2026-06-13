@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from telegram.ext import Application, ContextTypes
 
-from .analyzer import SYSTEM, get_client
+from .analyzer import SYSTEM, get_client_for
 from .news import get_news_bundle
 from .settings import get_model
 from .stocks import fmt_summary, get_holdings, get_summary
@@ -61,8 +61,9 @@ End with one *Portfolio note* (1-2 lines): concentration, sector tilt, anything 
 
 No buy/sell verdicts. Scannable on mobile. Close with the standard disclaimer.
 """
-    msg = await get_client().messages.create(
-        model=get_model(),
+    model = get_model()
+    msg = await get_client_for(model).messages.create(
+        model=model,
         max_tokens=2000,
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],

@@ -59,16 +59,19 @@ async def model_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "*Aliases*",
         ]
         tier_notes = {
-            "opus":   "deepest analysis, slowest, most expensive",
-            "sonnet": "balanced — recommended default",
-            "haiku":  "fastest + cheapest, lighter analysis",
+            "opus":           "deepest analysis, slowest, most expensive",
+            "sonnet":         "balanced — recommended default",
+            "haiku":          "fastest + cheapest Anthropic, lighter analysis",
+            "deepseek":       "DeepSeek V4 Pro — strong reasoning, ~3× cheaper than Sonnet",
+            "deepseek-pro":   "same as deepseek — V4 Pro",
+            "deepseek-flash": "DeepSeek V4 Flash — dirt cheap (~$0.14/MTok), great for briefs",
         }
         for alias, full in MODEL_ALIASES.items():
             note = tier_notes.get(alias, "")
             marker = "→" if full == current else " "
             lines.append(f"{marker} `{alias}` → `{full}`  _({note})_")
         lines.append("")
-        lines.append("Tip: `/model haiku` for cheap briefs, `/model opus` for deeper takes.")
+        lines.append("Tip: `/model deepseek-flash` for the cheapest morning briefs, `/model opus` for deepest analysis.")
         await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
         return
 
