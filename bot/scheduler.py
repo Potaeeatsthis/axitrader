@@ -71,7 +71,7 @@ No buy/sell verdicts. Scannable on mobile. Close with the standard disclaimer.
     return extract_text(msg)
 
 
-asyn def _send_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _send_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not OWNER_CHAT_ID:
         logger.warning("OWNER_CHAT_ID not set — skipping scheduled brief")
         return
