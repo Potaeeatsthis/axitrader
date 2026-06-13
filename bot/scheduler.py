@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from telegram.ext import Application, ContextTypes
 
-from .analyzer import SYSTEM, get_client_for
+from .analyzer import SYSTEM, extract_text, get_client_for
 from .news import get_news_bundle
 from .settings import get_model
 from .stocks import fmt_summary, get_holdings, get_summary
@@ -68,10 +68,10 @@ No buy/sell verdicts. Scannable on mobile. Close with the standard disclaimer.
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text
+    return extract_text(msg)
 
 
-async def _send_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
+asyn def _send_brief(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not OWNER_CHAT_ID:
         logger.warning("OWNER_CHAT_ID not set — skipping scheduled brief")
         return

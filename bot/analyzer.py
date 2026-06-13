@@ -52,6 +52,11 @@ def get_client_for(model_id: str) -> AsyncAnthropic:
         return get_deepseek_client()
     return get_client()
 
+def extract_text(msg) -> str:
+        """Pull text from a Message, skipping ThinkingBlocks etc."""
+            parts = [getattr(b, "text", None) for b in msg.content]
+                return "\n".join(p for p in parts if p) or "(empty response)"
+
 SYSTEM = """You are a stock-analysis assistant for a personal investor based in Thailand.
 
 Style:
@@ -128,7 +133,7 @@ Structure your response as:
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text
+    return extract_text(msg)
 
 
 async def chat_about_stocks(text: str) -> str:
